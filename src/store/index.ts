@@ -1,55 +1,88 @@
-import { createStore } from 'vuex'
+import { createStore } from "vuex";
 
-import { TankList, Nation } from "../types/Tank"
+import { ITankList, ITank, INation } from "../types/ITank";
 
 export default createStore({
-  state: {
-    tankList: {} as TankList,
-    isLoading: true,
-    error: null as string | null,
-    nations: [] as Nation[],
-  },
-  mutations: {
-    SET_TANKS(state, { tankList, nations }){
-      state.tankList = tankList;
-      state.nations = nations;
-      state.isLoading = false;
-    },
-    FETCH_ERROR(state, err){
-      state.error = err;
-      state.isLoading = false;
-    }
-  },
-  actions: {
-    fetchTankList({ commit }){
-      const url = `https://api.worldoftanks.eu/wot/encyclopedia/vehicles/?application_id=${process.env.VUE_APP_API_ID}`
-      fetch(url).then(e=> e.json()).then(e => {
-        if(e.error){
-          return commit('FETCH_ERROR', `Server error: ${e.error.message}`)
-        }
+	state: {
+		tankList: {} as ITankList,
+		isLoading: true,
+		error: false,
+		nations: [] as INation[],
+	},
+	mutations: {
+		SET_TANKS(state, { tanks, nations }) {
+			state.tankList = tanks;
+			state.nations = nations;
+			state.isLoading = false;
+		},
+		FETCH_ERROR(state) {
+			state.error = true;
+			state.isLoading = false;
+		},
+		RESET_STATE(state) {
+			state.isLoading = true;
+			state.error = false;
+		},
+	},
+	actions: {
+		fetchTankList({ commit }) {
+			commit("RESET_STATE");
+			fetch(`/api/tank`)
+				.then((e) => e.json())
+				.then((e) => {
+					if (e.success) {
+						const nationsStr = [] as string[];
+						const tanks: ITankList = {};
 
-        let nations = [] as Nation[];
+						e.tanks.forEach((e: ITank) => {
+							const {
+								image,
+								name,
+								nation,
+								tank_id,
+								tier,
+								type,
+							} = e;
+							if (!nationsStr.includes(nation)) {
+								nationsStr.push(nation);
+							}
 
-        const tankList = Object.values(e.data).reduce((list: TankList, value: any) => {
-          const { nation, short_name: name, tank_id, tier, type } = value
-          const image = value.images.contour_icon;
+							tanks[e.tank_id] = {
+								image,
+								name,
+								nation,
+								tank_id,
+								tier,
+								type,
+							};
+						});
 
-          if(!nations.find((e: any) => e.value == nation)){
-            nations.push({ name: nation.charAt(0).toUpperCase() + nation.slice(1), value: nation })
-          }
+						const nations: INation[] = nationsStr.map((e) => {
+							const name =
+								e.length < 5
+									? e.toUpperCase()
+									: e.charAt(0).toUpperCase() + e.slice(1);
+							return {
+								name,
+								value: e,
+							};
+						});
 
-          return {...list, [tank_id]: {nation, name, tank_id, tier, image, type}}
-        }, {});
+						commit("SET_TANKS", { tanks, nations });
+						return;
+					}
 
-
-        commit('SET_TANKS', { tankList, nations });
-      })
-    }
-  },
-  getters: {
-    tanksList: ({tankList}) => tankList,
-    isLoadedTankList: ({ isLoading }) => isLoading,
-    errorTankList: ({ error }) => error,
-    nations: ({ nations }) => nations,
-  }
-})
+					commit("FETCH_ERROR");
+				})
+				.catch((err) => {
+					commit("FETCH_ERROR");
+				});
+		},
+	},
+	getters: {
+		tanksList: ({ tankList }) => tankList,
+		isLoadingTankList: ({ isLoading }) => isLoading,
+		errorTankList: ({ error }) => error,
+		nations: ({ nations }) => nations,
+	},
+});

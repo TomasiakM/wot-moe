@@ -1,6 +1,6 @@
 <template>
-  <Nav />
-  <router-view class="container py-3" />
+    <Nav />
+    <router-view class="container py-3" style="margin-top: 60px" />
 </template>
 
 <script lang="ts">
@@ -10,15 +10,15 @@ import { mapActions } from "vuex";
 import Nav from "./components/Nav.vue";
 
 export default defineComponent({
-  name: "App",
-  components: {
-    Nav,
-  },
-  mounted() {
-    this.fetchTankList();
-  },
-  methods: {
-    ...mapActions(["fetchTankList"]),
-  },
+    name: "App",
+    components: {
+        Nav,
+    },
+    mounted() {
+        this.fetchTankList();
+    },
+    methods: {
+        ...mapActions(["fetchTankList"]),
+    },
 });
 </script>
