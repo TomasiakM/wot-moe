@@ -250,24 +250,36 @@ export default defineComponent({
             const { moeFilter, tierFilter, typeFilter, nationFilter } =
                 this.filters;
 
-            tanks = tanks.filter((e) =>
-                this.tanksList[e.tank_id] ? true : false
-            );
+            tanks = tanks.filter((e) => {
+                if (!this.tanksList[e.tank_id]) return false;
 
-            if (moeFilter.length)
-                tanks = tanks.filter((e) => moeFilter.includes(e.marksOnGun));
-            if (tierFilter.length)
-                tanks = tanks.filter((e) =>
-                    tierFilter.includes(this.tanksList[e.tank_id].tier)
-                );
-            if (typeFilter.length)
-                tanks = tanks.filter((e) =>
-                    typeFilter.includes(this.tanksList[e.tank_id].type)
-                );
-            if (nationFilter.length)
-                tanks = tanks.filter((e) =>
-                    nationFilter.includes(this.tanksList[e.tank_id].nation)
-                );
+                if (moeFilter.length && !moeFilter.includes(e.marksOnGun)) {
+                    return false;
+                }
+
+                if (
+                    tierFilter.length &&
+                    !tierFilter.includes(this.tanksList[e.tank_id].tier)
+                ) {
+                    return false;
+                }
+
+                if (
+                    typeFilter.length &&
+                    !typeFilter.includes(this.tanksList[e.tank_id].type)
+                ) {
+                    return false;
+                }
+
+                if (
+                    nationFilter.length &&
+                    !nationFilter.includes(this.tanksList[e.tank_id].nation)
+                ) {
+                    return false;
+                }
+
+                return true;
+            });
 
             return tanks;
         },
